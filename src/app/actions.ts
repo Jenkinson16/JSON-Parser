@@ -2,7 +2,7 @@
 'use server';
 
 import { parsePromptToJson, ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
-import { suggestPromptEnhancements, SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
+import { suggestPromptEnhancements, SuggestPromptEnhancementsOutput, SuggestPromptEnhancementsInput } from '@/ai/flows/suggest-prompt-enhancements';
 import { generateTitle, GenerateTitleOutput } from '@/ai/flows/generate-title';
 
 export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJsonOutput> {

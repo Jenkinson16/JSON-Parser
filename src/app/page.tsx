@@ -91,7 +91,7 @@ export default function PromptParserPage() {
       let title = item.title;
       if (!title) {
         try {
-            const titleResult = await handleGenerateTitle({ prompt: item.prompt });
+            const titleResult = await handleGenerateTitle(item.prompt);
             title = titleResult.title;
         } catch (e) {
             console.error("Failed to generate title, using prompt as fallback", e);
@@ -174,7 +174,7 @@ export default function PromptParserPage() {
     setIsEnhancing(true);
     setEnhancement(null);
     try {
-        const result = await handleSuggestEnhancements({ prompt, jsonOutput });
+        const result = await handleSuggestEnhancements(prompt, jsonOutput);
         setEnhancement(result);
         saveToHistory({ prompt, jsonOutput, enhancement: result });
     } catch (e) {
