@@ -179,14 +179,10 @@ export default function PromptParserPage() {
   const renderOutput = () => {
     if (isLoading) {
       return (
-        <Card className="h-full shadow-sm">
-          <CardContent className="p-4 h-full">
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-1/4" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-2 p-4 border rounded-2xl h-full bg-muted/20">
+          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       );
     }
 
@@ -205,24 +201,22 @@ export default function PromptParserPage() {
     
     if (!displayedJson) {
       return (
-        <Card className="flex h-full min-h-[40rem] items-center justify-center bg-muted/20 border-dashed">
+        <div className="flex h-full min-h-[40rem] items-center justify-center bg-muted/20 border-dashed border rounded-2xl">
             <div className="text-center text-muted-foreground">
                 <Code className="mx-auto h-12 w-12 mb-4" />
                 <h3 className="text-lg font-semibold">No JSON yet</h3>
                 <p className="text-sm">Run your first prompt to see results.</p>
             </div>
-        </Card>
+        </div>
       );
     }
 
     return (
-      <Card className="relative h-full shadow-sm">
-        <CardContent className="p-0 h-full">
-            <pre ref={codeBlockRef} className="bg-muted/50 rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
-            <code>{displayedJson}</code>
-            </pre>
-        </CardContent>
-      </Card>
+      <div className="relative h-full border rounded-2xl bg-muted/20">
+          <pre ref={codeBlockRef} className="rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
+          <code>{displayedJson}</code>
+          </pre>
+      </div>
     );
   };
 
@@ -244,16 +238,14 @@ export default function PromptParserPage() {
             <ClipboardCopy className="h-4 w-4" />
           </Button>
         </div>
-        <Card className="flex-1 shadow-sm relative">
-          <CardContent className="p-0 h-full">
+        <div className="flex-1 relative">
             <Textarea
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="h-full min-h-[40rem] resize-none border-0 p-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="h-full min-h-[40rem] resize-none p-4 rounded-2xl"
             />
-          </CardContent>
-        </Card>
+        </div>
         <div className="flex gap-2">
             <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg" className="flex-1">
             {isLoading ? (

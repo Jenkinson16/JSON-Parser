@@ -127,7 +127,7 @@ export default function HistoryPage() {
                             <ClipboardCopy className="h-4 w-4" />
                         </Button>
                       </div>
-                      <pre className="bg-muted/50 rounded-md p-4 font-code text-sm max-h-60 overflow-auto">
+                      <pre className="bg-muted rounded-md p-4 font-code text-sm max-h-60 overflow-auto">
                         <code>{item.jsonOutput}</code>
                       </pre>
                     </div>
@@ -150,7 +150,7 @@ export default function HistoryPage() {
                             <ClipboardCopy className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="bg-muted/50 p-4 rounded-md">
+                        <div className="bg-muted p-4 rounded-md">
                           <p className="font-code text-sm">{item.enhancement.enhancedPrompt}</p>
                           <Separator className="my-3" />
                           <p className="text-xs text-muted-foreground">{item.enhancement.reasoning}</p>
