@@ -58,7 +58,7 @@ export default function PromptParserPage() {
       let i = 0;
       const typeNextChar = () => {
         if (i < jsonOutput.length) {
-          setDisplayedJson((prev) => prev + jsonOutput[i]);
+          setDisplayedJson((prev) => prev + jsonOutput.charAt(i));
           i++;
           requestAnimationFrame(typeNextChar);
         }
@@ -266,38 +266,40 @@ export default function PromptParserPage() {
             </Button>
           </CardHeader>
           <CardContent className="flex-1 relative">
-            {isLoading && (
-              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center rounded-b-lg">
-                <div className="space-y-2 p-4 w-full">
-                    <Skeleton className="h-8 w-1/4 bg-white/20" />
-                    <Skeleton className="h-64 w-full bg-white/20" />
+            <div className="relative h-full">
+              {isLoading && (
+                <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                  <div className="space-y-2 p-4 w-full">
+                      <Skeleton className="h-8 w-1/4 bg-white/20" />
+                      <Skeleton className="h-64 w-full bg-white/20" />
+                  </div>
                 </div>
-              </div>
-            )}
-            {error && !isLoading && (
-              <Alert variant="destructive" className="m-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-                 <Button variant="outline" size="sm" className="mt-4" onClick={onGenerate}>
-                    Retry
-                 </Button>
-              </Alert>
-            )}
-            {!jsonOutput && !isLoading && !error && (
-                <div className="flex h-full items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                        <Code className="mx-auto h-12 w-12 mb-4" />
-                        <h3 className="text-lg font-semibold">Your generated JSON will appear here</h3>
-                        <p className="text-sm">Run a prompt to see the magic happen.</p>
-                    </div>
-                </div>
-            )}
-            {jsonOutput && !isLoading && (
-              <pre ref={codeBlockRef} className="rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
-                <code>{displayedJson}</code>
-              </pre>
-            )}
+              )}
+              {error && !isLoading && (
+                <Alert variant="destructive" className="m-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                   <Button variant="outline" size="sm" className="mt-4" onClick={onGenerate}>
+                      Retry
+                   </Button>
+                </Alert>
+              )}
+              {!jsonOutput && !isLoading && !error && (
+                  <div className="flex h-full items-center justify-center rounded-2xl glass-input p-4 min-h-64">
+                      <div className="text-center text-muted-foreground">
+                          <Code className="mx-auto h-12 w-12 mb-4" />
+                          <h3 className="text-lg font-semibold">Your generated JSON will appear here</h3>
+                          <p className="text-sm">Run a prompt to see the magic happen.</p>
+                      </div>
+                  </div>
+              )}
+              {jsonOutput && !isLoading && (
+                <pre ref={codeBlockRef} className="rounded-2xl p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh] glass-input">
+                  <code>{displayedJson}</code>
+                </pre>
+              )}
+            </div>
           </CardContent>
         </Card>
         
@@ -338,7 +340,7 @@ export default function PromptParserPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm bg-background/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
+                    <p className="text-sm glass-input p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
                     <Separator className="my-4" />
                     <div>
                         <h4 className="font-semibold text-sm mb-2">Reasoning</h4>

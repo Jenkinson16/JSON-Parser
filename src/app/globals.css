@@ -96,9 +96,9 @@
     @apply bg-card/60 backdrop-blur-lg border border-white/10 shadow-lg;
   }
   .glass-input {
-      @apply bg-white/10 backdrop-blur-md text-foreground placeholder:text-muted-foreground/80 border-white/20 focus-visible:ring-primary/50;
+      @apply bg-muted backdrop-blur-md text-foreground placeholder:text-muted-foreground/80 border-border/20 focus-visible:ring-primary/50;
   }
   .dark .glass-input {
-      @apply bg-black/10 text-foreground placeholder:text-muted-foreground/80 border-white/10;
+      @apply bg-black/10 backdrop-blur-md text-foreground placeholder:text-muted-foreground/80 border-white/10;
   }
 }
