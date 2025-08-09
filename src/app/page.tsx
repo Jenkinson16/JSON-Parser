@@ -5,18 +5,20 @@ import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { handleParsePrompt, handleSuggestEnhancements } from '@/app/actions';
 import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
+import type { SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Bot, Code, Sparkles, Lightbulb, ClipboardCopy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 export default function PromptParserPage() {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [displayedJson, setDisplayedJson] = useState('');
-  const [enhancementSuggestion, setEnhancementSuggestion] = useState<string>('');
+  const [enhancement, setEnhancement] = useState<SuggestPromptEnhancementsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,16 +29,16 @@ export default function PromptParserPage() {
     if (!isLoading && jsonOutput) {
       setDisplayedJson('');
       let i = 0;
-      const intervalId = setInterval(() => {
+      const typeNextChar = () => {
         if (i < jsonOutput.length) {
           setDisplayedJson((prev) => prev + jsonOutput[i]);
           i++;
-        } else {
-          clearInterval(intervalId);
+          requestAnimationFrame(typeNextChar);
         }
-      }, 10);
+      };
+      const animationFrameId = requestAnimationFrame(typeNextChar);
 
-      return () => clearInterval(intervalId);
+      return () => cancelAnimationFrame(animationFrameId);
     }
   }, [jsonOutput, isLoading]);
 
@@ -68,7 +70,7 @@ export default function PromptParserPage() {
     setError(null);
     setJsonOutput('');
     setDisplayedJson('');
-    setEnhancementSuggestion('');
+    setEnhancement(null);
 
     try {
       const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
@@ -101,10 +103,10 @@ export default function PromptParserPage() {
 
   const onEnhance = async () => {
     setIsEnhancing(true);
-    setEnhancementSuggestion('');
+    setEnhancement(null);
     try {
         const result = await handleSuggestEnhancements(prompt, jsonOutput);
-        setEnhancementSuggestion(result.enhancedPrompt);
+        setEnhancement(result);
     } catch (e) {
          const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
          toast({
@@ -121,7 +123,7 @@ export default function PromptParserPage() {
   const renderOutput = () => {
     if (isLoading) {
       return (
-        <div className="space-y-2">
+        <div className="space-y-2 p-4">
           <Skeleton className="h-8 w-1/4" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -130,7 +132,7 @@ export default function PromptParserPage() {
 
     if (error) {
       return (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="m-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
@@ -154,19 +156,21 @@ export default function PromptParserPage() {
     }
 
     return (
-      <div className="relative h-full">
+      <Card className="relative h-full shadow-sm">
         <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-7 w-7"
+            className="absolute top-4 right-4 h-7 w-7"
             onClick={() => copyToClipboard(jsonOutput, 'JSON Output')}
         >
             <ClipboardCopy className="h-4 w-4" />
         </Button>
-        <pre ref={codeBlockRef} className="bg-muted/50 rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
-          <code>{displayedJson}</code>
-        </pre>
-      </div>
+        <CardContent className="p-0 h-full">
+            <pre ref={codeBlockRef} className="bg-muted/50 rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
+            <code>{displayedJson}</code>
+            </pre>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -183,18 +187,18 @@ export default function PromptParserPage() {
            <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-7 w-7"
+            className="absolute top-4 right-4 h-7 w-7 z-10"
             onClick={() => copyToClipboard(prompt, 'Prompt')}
             disabled={!prompt}
           >
             <ClipboardCopy className="h-4 w-4" />
           </Button>
-          <CardContent className="p-4 h-full">
+          <CardContent className="p-0 h-full">
             <Textarea
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="h-full min-h-[40rem] resize-none border-0 p-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="h-full min-h-[40rem] resize-none border-0 p-4 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </CardContent>
         </Card>
@@ -232,7 +236,7 @@ export default function PromptParserPage() {
           <Code className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">JSON Output</h2>
         </div>
-        <div className="flex-1 rounded-2xl shadow-sm">
+        <div className="flex-1 rounded-2xl">
           {renderOutput()}
         </div>
         
@@ -244,15 +248,19 @@ export default function PromptParserPage() {
                         <span>Enhanced Prompt</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-4">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-4 w-full" />
+                     <Separator />
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                 </CardContent>
             </Card>
         )}
 
-        {enhancementSuggestion && (
+        {enhancement && (
             <Card className="shadow-sm">
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -266,11 +274,16 @@ export default function PromptParserPage() {
                             variant="ghost"
                             size="icon"
                             className="absolute -top-1 right-0 h-7 w-7"
-                            onClick={() => copyToClipboard(enhancementSuggestion, 'Enhanced Prompt')}
+                            onClick={() => copyToClipboard(enhancement.enhancedPrompt, 'Enhanced Prompt')}
                         >
                             <ClipboardCopy className="h-4 w-4" />
                         </Button>
-                        <p className="text-sm bg-muted/50 p-4 rounded-md">{enhancementSuggestion}</p>
+                        <p className="text-sm bg-muted/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
+                    </div>
+                    <Separator className="my-4" />
+                    <div>
+                        <h4 className="font-semibold text-sm mb-2">Reasoning</h4>
+                        <p className="text-sm text-muted-foreground">{enhancement.reasoning}</p>
                     </div>
                 </CardContent>
             </Card>

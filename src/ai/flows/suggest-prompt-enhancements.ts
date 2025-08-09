@@ -20,6 +20,7 @@ export type SuggestPromptEnhancementsInput = z.infer<typeof SuggestPromptEnhance
 
 const SuggestPromptEnhancementsOutputSchema = z.object({
   enhancedPrompt: z.string().describe('A single, rewritten version of the prompt with improvements incorporated.'),
+  reasoning: z.string().describe('A brief explanation of why the enhanced prompt is better.'),
 });
 export type SuggestPromptEnhancementsOutput = z.infer<typeof SuggestPromptEnhancementsOutputSchema>;
 
@@ -35,7 +36,7 @@ const prompt = ai.definePrompt({
 
   Analyze the user's original prompt and the resulting JSON output. Based on this, rewrite the user's prompt to be clearer, more specific, and better structured for a large language model.
 
-  Do not just list suggestions. Provide a single, complete, rewritten prompt that incorporates your improvements.
+  Do not just list suggestions. Provide a single, complete, rewritten prompt that incorporates your improvements. Also, provide a brief reasoning for why your enhanced version is better.
 
   Original Prompt: {{{prompt}}}
   Generated JSON: {{{jsonOutput}}}
