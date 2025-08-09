@@ -252,12 +252,12 @@ export default function PromptParserPage() {
             <ClipboardCopy className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex-1 flex flex-col relative">
+        <div className="flex-1 flex flex-col justify-end">
             <Textarea
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="flex-grow resize-none p-4 rounded-2xl glass-input"
+              className="resize-none p-4 rounded-2xl glass-input min-h-[120px] lg:min-h-[160px]"
             />
         </div>
         <div className="flex gap-2">
