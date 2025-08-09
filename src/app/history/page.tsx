@@ -7,6 +7,7 @@ import { HistoryItem } from '@/app/page';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Trash, Clock, Lightbulb, Download, ClipboardCopy } from 'lucide-react';
@@ -55,6 +56,25 @@ export default function HistoryPage() {
       toast({
         title: 'Error',
         description: 'Could not clear history.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const deleteHistoryItem = (id: string) => {
+    try {
+      const newHistory = history.filter((item) => item.id !== id);
+      setHistory(newHistory);
+      localStorage.setItem('promptHistory', JSON.stringify(newHistory));
+      toast({
+        title: 'Item Deleted',
+        description: 'The selected history item has been deleted.',
+      });
+    } catch (error) {
+      console.error('Failed to delete history item:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not delete the history item.',
         variant: 'destructive',
       });
     }
@@ -165,7 +185,27 @@ export default function HistoryPage() {
                       </div>
                     )}
                   </div>
-                  <CardFooter className="justify-end p-0 pt-6">
+                  <CardFooter className="justify-end p-0 pt-6 gap-2">
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="destructive-outline">
+                          <Trash className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this history item.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteHistoryItem(item.id)}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
                     <Button variant="outline" onClick={() => loadHistoryItem(item)}>
                       <Download className="mr-2 h-4 w-4" /> Load in Editor
                     </Button>
