@@ -107,7 +107,7 @@ export default function PromptParserPage() {
         timestamp: new Date().toLocaleString(),
       };
       
-      const existingItemIndex = history.findIndex(h => h.id === newHistoryItem.id);
+      const existingItemIndex = history.findIndex(h => h.prompt === newHistoryItem.prompt);
       if(existingItemIndex > -1){
         history[existingItemIndex] = { ...history[existingItemIndex], ...newHistoryItem, enhancement: item.enhancement || history[existingItemIndex].enhancement };
       } else {
@@ -193,9 +193,9 @@ export default function PromptParserPage() {
   const renderOutput = () => {
     if (isLoading) {
       return (
-        <div className="space-y-2 p-4 border rounded-2xl h-full bg-muted/20">
-          <Skeleton className="h-8 w-1/4" />
-          <Skeleton className="h-64 w-full" />
+        <div className="space-y-2 p-4 glass-card rounded-2xl h-full">
+          <Skeleton className="h-8 w-1/4 bg-white/20" />
+          <Skeleton className="h-64 w-full bg-white/20" />
         </div>
       );
     }
@@ -215,7 +215,7 @@ export default function PromptParserPage() {
     
     if (!displayedJson) {
       return (
-        <div className="flex h-full min-h-[40rem] items-center justify-center bg-muted/20 border-dashed border rounded-2xl">
+        <div className="flex h-full min-h-[40rem] items-center justify-center glass-card border-dashed rounded-2xl">
             <div className="text-center text-muted-foreground">
                 <Code className="mx-auto h-12 w-12 mb-4" />
                 <h3 className="text-lg font-semibold">No JSON yet</h3>
@@ -226,7 +226,7 @@ export default function PromptParserPage() {
     }
 
     return (
-      <div className="relative h-full border rounded-2xl bg-muted/20">
+      <div className="relative h-full glass-card rounded-2xl">
           <pre ref={codeBlockRef} className="rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
           <code>{displayedJson}</code>
           </pre>
@@ -257,7 +257,7 @@ export default function PromptParserPage() {
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="flex-grow resize-none p-4 rounded-2xl"
+              className="flex-grow resize-none p-4 rounded-2xl glass-input"
             />
         </div>
         <div className="flex gap-2">
@@ -310,7 +310,7 @@ export default function PromptParserPage() {
         </div>
         
         {isEnhancing && (
-            <Card className="shadow-sm">
+            <Card className="shadow-sm glass-card">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Lightbulb className="h-5 w-5" />
@@ -318,19 +318,19 @@ export default function PromptParserPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full bg-white/20" />
+                    <Skeleton className="h-4 w-4/5 bg-white/20" />
+                    <Skeleton className="h-4 w-full bg-white/20" />
                      <Separator />
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/3 bg-white/20" />
+                    <Skeleton className="h-4 w-full bg-white/20" />
+                    <Skeleton className="h-4 w-full bg-white/20" />
                 </CardContent>
             </Card>
         )}
 
         {enhancement && (
-            <Card className="shadow-sm">
+            <Card className="shadow-sm glass-card">
                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Lightbulb className="h-5 w-5" />
@@ -346,7 +346,7 @@ export default function PromptParserPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm bg-muted/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
+                    <p className="text-sm bg-background/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
                     <Separator className="my-4" />
                     <div>
                         <h4 className="font-semibold text-sm mb-2">Reasoning</h4>

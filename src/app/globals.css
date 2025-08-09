@@ -86,5 +86,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(circle at top left, hsl(var(--primary) / 0.05), transparent 30%),
+                      radial-gradient(circle at bottom right, hsl(var(--accent) / 0.05), transparent 30%);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-lg border border-white/10 shadow-lg;
+  }
+  .glass-input {
+      @apply bg-white/10 backdrop-blur-md text-foreground placeholder:text-muted-foreground/80 border-white/20 focus-visible:ring-primary/50;
+  }
+  .dark .glass-input {
+      @apply bg-black/10 text-foreground placeholder:text-muted-foreground/80 border-white/10;
   }
 }
