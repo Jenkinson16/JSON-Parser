@@ -12,22 +12,21 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Trash, Clock, Lightbulb, Download, ClipboardCopy, Star } from 'lucide-react';
 
-export default function HistoryPage() {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+export default function FavoritesPage() {
+  const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     try {
-      const storedHistory = JSON.parse(localStorage.getItem('promptHistory') || '[]');
-      setHistory(storedHistory);
-    } catch (error)
-      {
-      console.error('Failed to load history:', error);
+      const storedFavorites = JSON.parse(localStorage.getItem('promptFavorites') || '[]');
+      setFavorites(storedFavorites);
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
       toast({
         title: 'Error',
-        description: 'Could not load history from local storage.',
+        description: 'Could not load favorites from local storage.',
         variant: 'destructive',
       });
     }
@@ -43,109 +42,68 @@ export default function HistoryPage() {
     });
   };
 
-  const clearHistory = () => {
+  const removeFromFavorites = (id: string) => {
     try {
-      localStorage.removeItem('promptHistory');
-      setHistory([]);
+      const newFavorites = favorites.filter((item) => item.id !== id);
+      setFavorites(newFavorites);
+      localStorage.setItem('promptFavorites', JSON.stringify(newFavorites));
       toast({
-        title: 'History Cleared',
-        description: 'Your prompt history has been successfully cleared.',
+        title: 'Removed from Favorites',
+        description: 'The selected item has been removed from your favorites.',
       });
     } catch (error) {
-      console.error('Failed to clear history:', error);
+      console.error('Failed to remove favorite item:', error);
       toast({
         title: 'Error',
-        description: 'Could not clear history.',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  const deleteHistoryItem = (id: string) => {
-    try {
-      const newHistory = history.filter((item) => item.id !== id);
-      setHistory(newHistory);
-      localStorage.setItem('promptHistory', JSON.stringify(newHistory));
-      toast({
-        title: 'Item Deleted',
-        description: 'The selected history item has been deleted.',
-      });
-    } catch (error) {
-      console.error('Failed to delete history item:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not delete the history item.',
+        description: 'Could not remove the item from favorites.',
         variant: 'destructive',
       });
     }
   };
 
-  const loadHistoryItem = (item: HistoryItem) => {
+  const loadFavoriteItem = (item: HistoryItem) => {
     sessionStorage.setItem('loadFromHistory', JSON.stringify(item));
     router.push('/');
     toast({
-      title: 'Loaded from History',
+      title: 'Loaded from Favorites',
       description: 'Prompt has been loaded into the main page.',
     });
   };
-  
-  const addToFavorites = (item: HistoryItem) => {
-    try {
-      const favorites = JSON.parse(localStorage.getItem('promptFavorites') || '[]') as HistoryItem[];
-      // Check if item already in favorites
-      if (favorites.some(fav => fav.id === item.id)) {
-        toast({
-          title: 'Already in Favorites',
-          description: 'This prompt is already in your favorites.',
-        });
-        return;
-      }
-      const newFavorites = [item, ...favorites];
-      localStorage.setItem('promptFavorites', JSON.stringify(newFavorites));
-      toast({
-        title: 'Added to Favorites',
-        description: 'The prompt has been added to your favorites.',
-      });
-    } catch (error) {
-        console.error('Failed to add to favorites:', error);
-        toast({
-            title: 'Error',
-            description: 'Could not add the item to favorites.',
-            variant: 'destructive',
-        });
-    }
-  };
 
   if (!hydrated) {
-    return <div className="p-6">Loading history...</div>;
+    return <div className="p-6">Loading favorites...</div>;
   }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Prompt History</h1>
-        {history.length > 0 && (
-          <Button variant="destructive" onClick={clearHistory}>
-            <Trash className="mr-2 h-4 w-4" /> Clear All History
-          </Button>
+        <h1 className="text-3xl font-bold">Favorite Prompts</h1>
+        {favorites.length > 0 && (
+            <Button variant="outline" onClick={() => {
+                localStorage.removeItem('promptFavorites');
+                setFavorites([]);
+                toast({ title: 'Favorites Cleared', description: 'All your favorite prompts have been cleared.' });
+            }}>
+                <Trash className="mr-2 h-4 w-4" /> Clear All Favorites
+            </Button>
         )}
       </div>
 
-      {history.length === 0 ? (
+      {favorites.length === 0 ? (
         <Card className="text-center py-12">
           <CardHeader>
-            <CardTitle>No History Found</CardTitle>
+            <CardTitle>No Favorites Found</CardTitle>
             <CardDescription>
-              Your generated prompts will appear here once you start using the app.
+              You can add prompts to your favorites from the history page.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push('/')}>Start Generating</Button>
+            <Button onClick={() => router.push('/history')}>View History</Button>
           </CardContent>
         </Card>
       ) : (
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {history.map((item) => (
+          {favorites.map((item) => (
             <AccordionItem value={item.id} key={item.id} className="border-b-0">
               <Card className="shadow-sm">
                 <AccordionTrigger className="p-6 text-left hover:no-underline">
@@ -213,31 +171,27 @@ export default function HistoryPage() {
                     )}
                   </div>
                   <CardFooter className="justify-end p-0 pt-6 gap-2">
-                     <AlertDialog>
+                    <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="destructive-outline">
-                          <Trash className="mr-2 h-4 w-4" /> Delete
+                          <Trash className="mr-2 h-4 w-4" /> Remove
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete this history item.
+                            This will remove the prompt from your favorites, but it will still be in your history.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteHistoryItem(item.id)}>Continue</AlertDialogAction>
+                          <AlertDialogAction onClick={() => removeFromFavorites(item.id)}>Continue</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                    
-                    <Button variant="outline" onClick={() => addToFavorites(item)}>
-                        <Star className="mr-2 h-4 w-4" /> Add to Favorites
-                    </Button>
 
-                    <Button variant="outline" onClick={() => loadHistoryItem(item)}>
+                    <Button variant="outline" onClick={() => loadFavoriteItem(item)}>
                       <Download className="mr-2 h-4 w-4" /> Load in Editor
                     </Button>
                   </CardFooter>
@@ -250,3 +204,4 @@ export default function HistoryPage() {
     </div>
   );
 }
+

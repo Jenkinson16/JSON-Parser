@@ -9,6 +9,7 @@ import {
   Settings,
   History,
   Code2,
+  Star,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/history', label: 'History', icon: History },
+    { href: '/favorites', label: 'Favorites', icon: Star },
   ];
 
   return (
