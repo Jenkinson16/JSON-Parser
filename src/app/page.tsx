@@ -193,7 +193,7 @@ export default function PromptParserPage() {
   const renderOutput = () => {
     if (isLoading) {
       return (
-        <div className="space-y-2 p-4 glass-card rounded-2xl h-full">
+        <div className="space-y-2 p-4 glass-card rounded-2xl h-full w-full">
           <Skeleton className="h-8 w-1/4 bg-white/20" />
           <Skeleton className="h-64 w-full bg-white/20" />
         </div>
@@ -214,148 +214,167 @@ export default function PromptParserPage() {
     }
     
     if (!displayedJson) {
+        if(isLoading) return null;
       return (
-        <div className="flex h-full min-h-[40rem] items-center justify-center glass-card border-dashed rounded-2xl">
+        <div className="flex h-full min-h-[40rem] items-center justify-center">
             <div className="text-center text-muted-foreground">
                 <Code className="mx-auto h-12 w-12 mb-4" />
-                <h3 className="text-lg font-semibold">No JSON yet</h3>
-                <p className="text-sm">Run your first prompt to see results.</p>
+                <h3 className="text-lg font-semibold">PromptParser</h3>
+                <p className="text-sm">Run a prompt to see the magic happen.</p>
             </div>
         </div>
       );
     }
 
     return (
-      <div className="relative h-full glass-card rounded-2xl">
-          <pre ref={codeBlockRef} className="rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
-          <code>{displayedJson}</code>
-          </pre>
-      </div>
+        <div className="space-y-8 w-full">
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="h-6 w-6 text-primary" />
+                        <h2 className="text-2xl font-bold">Your Prompt</h2>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(prompt, 'Prompt')}
+                        disabled={!prompt}
+                        aria-label="Copy prompt"
+                    >
+                        <ClipboardCopy className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="p-4 rounded-2xl glass-card">
+                    <p>{prompt}</p>
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Code className="h-6 w-6 text-primary" />
+                        <h2 className="text-2xl font-bold">JSON Output</h2>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(jsonOutput, 'JSON Output')}
+                        disabled={!jsonOutput}
+                        aria-label="Copy JSON output"
+                    >
+                        <ClipboardCopy className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="relative h-full glass-card rounded-2xl">
+                    <pre ref={codeBlockRef} className="rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
+                    <code>{displayedJson}</code>
+                    </pre>
+                </div>
+            </div>
+
+             {isEnhancing && (
+                <Card className="shadow-sm glass-card">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Lightbulb className="h-5 w-5" />
+                            <span>Enhanced Prompt</span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-4 w-full bg-white/20" />
+                        <Skeleton className="h-4 w-4/5 bg-white/20" />
+                        <Skeleton className="h-4 w-full bg-white/20" />
+                        <Separator />
+                        <Skeleton className="h-4 w-1/3 bg-white/20" />
+                        <Skeleton className="h-4 w-full bg-white/20" />
+                        <Skeleton className="h-4 w-full bg-white/20" />
+                    </CardContent>
+                </Card>
+            )}
+
+            {enhancement && (
+                <Card className="shadow-sm glass-card">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Lightbulb className="h-5 w-5" />
+                            <span>Enhanced Prompt</span>
+                        </CardTitle>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(enhancement.enhancedPrompt, 'Enhanced Prompt')}
+                            aria-label="Copy enhanced prompt"
+                        >
+                            <ClipboardCopy className="h-4 w-4" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm bg-background/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
+                        <Separator className="my-4" />
+                        <div>
+                            <h4 className="font-semibold text-sm mb-2">Reasoning</h4>
+                            <p className="text-sm text-muted-foreground">{enhancement.reasoning}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
   };
 
   return (
-    <div className="grid h-full flex-1 gap-8 p-4 md:grid-cols-2 md:p-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Prompt Input</h2>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => copyToClipboard(prompt, 'Prompt')}
-            disabled={!prompt}
-            aria-label="Copy prompt"
-          >
-            <ClipboardCopy className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex-1 flex flex-col justify-end">
-            <Textarea
-              placeholder="e.g., Create a user profile with a name, email, and a list of friends."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="resize-none p-4 rounded-2xl glass-input min-h-[120px] lg:min-h-[160px]"
-            />
-        </div>
-        <div className="flex gap-2">
-            <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg" className="flex-1">
-            {isLoading ? (
-                <>
-                <Bot className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-                </>
-            ) : (
-                'Generate JSON'
-            )}
-            </Button>
-            {jsonOutput && !isLoading && (
-                 <Button onClick={onEnhance} disabled={isEnhancing} size="lg" variant="outline">
-                    {isEnhancing ? (
-                        <>
-                            <Lightbulb className="mr-2 h-4 w-4 animate-spin" />
-                            Thinking...
-                        </>
-                    ) : (
-                        <>
-                            <Lightbulb className="mr-2 h-4 w-4" />
-                            Suggest Enhancements
-                        </>
-                    )}
-                </Button>
-            )}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                <Code className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-bold">JSON Output</h2>
+    <div className="flex flex-col h-full flex-1 p-4 md:p-6">
+        <div className="flex-1 flex items-center justify-center">
+            <div className="w-full max-w-4xl mx-auto">
+                 {renderOutput()}
             </div>
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => copyToClipboard(jsonOutput, 'JSON Output')}
-                disabled={!jsonOutput}
-                aria-label="Copy JSON output"
-            >
-                <ClipboardCopy className="h-4 w-4" />
-            </Button>
         </div>
-        <div className="flex-1 rounded-2xl">
-          {renderOutput()}
-        </div>
-        
-        {isEnhancing && (
-            <Card className="shadow-sm glass-card">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <Lightbulb className="h-5 w-5" />
-                        <span>Enhanced Prompt</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-4 w-full bg-white/20" />
-                    <Skeleton className="h-4 w-4/5 bg-white/20" />
-                    <Skeleton className="h-4 w-full bg-white/20" />
-                     <Separator />
-                    <Skeleton className="h-4 w-1/3 bg-white/20" />
-                    <Skeleton className="h-4 w-full bg-white/20" />
-                    <Skeleton className="h-4 w-full bg-white/20" />
-                </CardContent>
-            </Card>
-        )}
 
-        {enhancement && (
-            <Card className="shadow-sm glass-card">
-                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <Lightbulb className="h-5 w-5" />
-                        <span>Enhanced Prompt</span>
-                    </CardTitle>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => copyToClipboard(enhancement.enhancedPrompt, 'Enhanced Prompt')}
-                        aria-label="Copy enhanced prompt"
-                    >
-                        <ClipboardCopy className="h-4 w-4" />
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm bg-background/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
-                    <Separator className="my-4" />
-                    <div>
-                        <h4 className="font-semibold text-sm mb-2">Reasoning</h4>
-                        <p className="text-sm text-muted-foreground">{enhancement.reasoning}</p>
+        <div className="sticky bottom-0 left-0 right-0 w-full bg-background/80 backdrop-blur-sm pt-4 pb-8">
+            <div className="max-w-4xl mx-auto">
+                 <div className="relative">
+                    <Textarea
+                        placeholder="e.g., Create a user profile with a name, email, and a list of friends."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className="resize-none p-4 pr-20 rounded-2xl glass-input min-h-[56px] lg:min-h-[64px]"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                onGenerate();
+                            }
+                        }}
+                    />
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg">
+                            {isLoading ? (
+                                <>
+                                <Bot className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                                </>
+                            ) : (
+                                'Generate'
+                            )}
+                        </Button>
+                        {jsonOutput && !isLoading && (
+                            <Button onClick={onEnhance} disabled={isEnhancing} size="lg" variant="outline">
+                                {isEnhancing ? (
+                                    <>
+                                        <Lightbulb className="mr-2 h-4 w-4 animate-spin" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Lightbulb className="mr-2 h-4 w-4" />
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
-                </CardContent>
-            </Card>
-        )}
-      </div>
+                </div>
+            </div>
+        </div>
     </div>
   );
 }
+
+    
