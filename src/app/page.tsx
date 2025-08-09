@@ -3,20 +3,22 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { handleParsePrompt } from '@/app/actions';
+import { handleParsePrompt, handleSuggestEnhancements } from '@/app/actions';
 import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Bot, Code, Sparkles } from 'lucide-react';
+import { AlertCircle, Bot, Code, Sparkles, Lightbulb } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function PromptParserPage() {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [displayedJson, setDisplayedJson] = useState('');
+  const [enhancementSuggestions, setEnhancementSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const codeBlockRef = useRef<HTMLPreElement>(null);
@@ -31,7 +33,7 @@ export default function PromptParserPage() {
         if (i >= jsonOutput.length) {
           clearInterval(interval);
         }
-      }, 10); // Adjust typing speed here
+      }, 10);
 
       return () => clearInterval(interval);
     }
@@ -56,15 +58,15 @@ export default function PromptParserPage() {
     setError(null);
     setJsonOutput('');
     setDisplayedJson('');
+    setEnhancementSuggestions([]);
 
     try {
       const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
-      // Format JSON with indentation for better readability
       try {
         const formattedJson = JSON.stringify(JSON.parse(result.jsonOutput), null, 2);
         setJsonOutput(formattedJson);
       } catch {
-        setJsonOutput(result.jsonOutput); // Fallback to raw output if not valid JSON
+        setJsonOutput(result.jsonOutput);
       }
 
       if (result.biasDetected) {
@@ -86,6 +88,25 @@ export default function PromptParserPage() {
       setIsLoading(false);
     }
   };
+
+  const onEnhance = async () => {
+    setIsEnhancing(true);
+    setEnhancementSuggestions([]);
+    try {
+        const result = await handleSuggestEnhancements(prompt, jsonOutput);
+        setEnhancementSuggestions(result.suggestions);
+    } catch (e) {
+         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+         toast({
+            title: 'Enhancement Error',
+            description: errorMessage,
+            variant: 'destructive',
+         });
+    } finally {
+        setIsEnhancing(false);
+    }
+  };
+
 
   const renderOutput = () => {
     if (isLoading) {
@@ -131,7 +152,6 @@ export default function PromptParserPage() {
 
   return (
     <div className="grid h-full flex-1 gap-8 p-4 md:grid-cols-2 md:p-6">
-      {/* --- Left Panel --- */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-primary" />
@@ -147,19 +167,70 @@ export default function PromptParserPage() {
             />
           </CardContent>
         </Card>
-        <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg">
-          {isLoading ? (
-            <>
-              <Bot className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            'Generate JSON'
-          )}
-        </Button>
+        <div className="flex gap-2">
+            <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg" className="flex-1">
+            {isLoading ? (
+                <>
+                <Bot className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+                </>
+            ) : (
+                'Generate JSON'
+            )}
+            </Button>
+            {jsonOutput && !isLoading && (
+                 <Button onClick={onEnhance} disabled={isEnhancing} size="lg" variant="outline">
+                    {isEnhancing ? (
+                        <>
+                            <Lightbulb className="mr-2 h-4 w-4 animate-spin" />
+                            Thinking...
+                        </>
+                    ) : (
+                        <>
+                            <Lightbulb className="mr-2 h-4 w-4" />
+                            Suggest Enhancements
+                        </>
+                    )}
+                </Button>
+            )}
+        </div>
+        
+        {isEnhancing && (
+            <Card className="shadow-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Lightbulb className="h-5 w-5" />
+                        <span>Enhancement Suggestions</span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-4 w-full" />
+                </CardContent>
+            </Card>
+        )}
+
+        {enhancementSuggestions.length > 0 && (
+            <Card className="shadow-sm">
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Lightbulb className="h-5 w-5" />
+                        <span>Enhancement Suggestions</span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="list-disc space-y-2 pl-5 text-sm">
+                        {enhancementSuggestions.map((suggestion, index) => (
+                            <li key={index}>{suggestion}</li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
+
       </div>
 
-      {/* --- Right Panel --- */}
       <div className="flex flex-col gap-4">
          <div className="flex items-center gap-2">
           <Code className="h-6 w-6 text-primary" />
