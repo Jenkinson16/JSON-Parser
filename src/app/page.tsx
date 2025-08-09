@@ -14,6 +14,14 @@ import { AlertCircle, Bot, Code, Sparkles, Lightbulb, ClipboardCopy } from 'luci
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
+export interface HistoryItem {
+  id: string;
+  prompt: string;
+  jsonOutput: string;
+  enhancement?: SuggestPromptEnhancementsOutput | null;
+  timestamp: string;
+}
+
 export default function PromptParserPage() {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
@@ -31,7 +39,7 @@ export default function PromptParserPage() {
       let i = 0;
       const typeNextChar = () => {
         if (i < jsonOutput.length) {
-          setDisplayedJson((prev) => prev + jsonOutput[i]);
+          setDisplayedJson((prev) => prev + (jsonOutput[i] || ''));
           i++;
           requestAnimationFrame(typeNextChar);
         }
@@ -47,7 +55,7 @@ export default function PromptParserPage() {
       codeBlockRef.current.scrollTop = codeBlockRef.current.scrollHeight;
     }
   }, [displayedJson]);
-  
+
   const copyToClipboard = (text: string, type: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -56,6 +64,22 @@ export default function PromptParserPage() {
       description: `${type} has been copied to your clipboard.`,
     });
   };
+  
+  const saveToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
+    try {
+      const history = JSON.parse(localStorage.getItem('promptHistory') || '[]') as HistoryItem[];
+      const newHistoryItem: HistoryItem = {
+        ...item,
+        id: new Date().toISOString(),
+        timestamp: new Date().toLocaleString(),
+      };
+      const newHistory = [newHistoryItem, ...history].slice(0, 50); // Limit history size
+      localStorage.setItem('promptHistory', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Failed to save to history:', error);
+    }
+  };
+
 
   const onGenerate = async () => {
     if (!prompt.trim()) {
@@ -74,11 +98,13 @@ export default function PromptParserPage() {
 
     try {
       const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
+      let formattedJson = '';
       try {
-        const formattedJson = JSON.stringify(JSON.parse(result.jsonOutput), null, 2);
+        formattedJson = JSON.stringify(JSON.parse(result.jsonOutput), null, 2);
         setJsonOutput(formattedJson);
       } catch {
-        setJsonOutput(result.jsonOutput);
+        formattedJson = result.jsonOutput;
+        setJsonOutput(formattedJson);
       }
 
       if (result.biasDetected) {
@@ -87,6 +113,8 @@ export default function PromptParserPage() {
           description: result.biasReport || 'The AI detected potential bias in your prompt.',
         });
       }
+      
+      saveToHistory({ prompt, jsonOutput: formattedJson });
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -107,6 +135,7 @@ export default function PromptParserPage() {
     try {
         const result = await handleSuggestEnhancements(prompt, jsonOutput);
         setEnhancement(result);
+        saveToHistory({ prompt, jsonOutput, enhancement: result });
     } catch (e) {
          const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
          toast({

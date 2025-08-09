@@ -1,0 +1,168 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { HistoryItem } from '@/app/page';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { Trash, Clock, Lightbulb, Download, ClipboardCopy } from 'lucide-react';
+
+export default function HistoryPage() {
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const storedHistory = JSON.parse(localStorage.getItem('promptHistory') || '[]');
+      setHistory(storedHistory);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not load history from local storage.',
+        variant: 'destructive',
+      });
+    }
+    setHydrated(true);
+  }, [toast]);
+
+  const copyToClipboard = (text: string, type: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied to clipboard!',
+      description: `${type} has been copied to your clipboard.`,
+    });
+  };
+
+  const clearHistory = () => {
+    try {
+      localStorage.removeItem('promptHistory');
+      setHistory([]);
+      toast({
+        title: 'History Cleared',
+        description: 'Your prompt history has been successfully cleared.',
+      });
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not clear history.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const loadHistoryItem = (item: HistoryItem) => {
+    // This is a simple way to pass data to the main page.
+    // For more complex scenarios, consider state management (e.g., Context API, Zustand).
+    sessionStorage.setItem('loadFromHistory', JSON.stringify(item));
+    router.push('/');
+    toast({
+      title: 'Loaded from History',
+      description: 'Prompt has been loaded into the main page.',
+    });
+  };
+
+  if (!hydrated) {
+    return <div className="p-6">Loading history...</div>;
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Prompt History</h1>
+        {history.length > 0 && (
+          <Button variant="destructive" onClick={clearHistory}>
+            <Trash className="mr-2 h-4 w-4" /> Clear All History
+          </Button>
+        )}
+      </div>
+
+      {history.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardHeader>
+            <CardTitle>No History Found</CardTitle>
+            <CardDescription>
+              Your generated prompts will appear here once you start using the app.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push('/')}>Start Generating</Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Accordion type="single" collapsible className="w-full space-y-4">
+          {history.map((item) => (
+            <AccordionItem value={item.id} key={item.id} className="border-b-0">
+              <Card className="shadow-sm">
+                <AccordionTrigger className="p-6 text-left hover:no-underline">
+                  <div className="flex-1">
+                    <p className="font-mono text-sm truncate">{item.prompt}</p>
+                    <p className="text-xs text-muted-foreground mt-2 flex items-center">
+                      <Clock className="mr-2 h-3 w-3" />
+                      {item.timestamp}
+                    </p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <Separator className="mb-4" />
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-semibold mb-2">Generated JSON</h4>
+                      <div className="relative">
+                        <pre className="bg-muted/50 rounded-md p-4 font-code text-sm max-h-60 overflow-auto">
+                          <code>{item.jsonOutput}</code>
+                        </pre>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7"
+                            onClick={() => copyToClipboard(item.jsonOutput, 'JSON Output')}
+                        >
+                            <ClipboardCopy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {item.enhancement && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <Lightbulb className="mr-2 h-4 w-4 text-primary" />
+                          Enhancement Suggestion
+                        </h4>
+                        <div className="relative bg-muted/50 p-4 rounded-md">
+                           <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7"
+                            onClick={() => copyToClipboard(item.enhancement?.enhancedPrompt || '', 'Enhanced Prompt')}
+                          >
+                            <ClipboardCopy className="h-4 w-4" />
+                          </Button>
+                          <p className="font-code text-sm">{item.enhancement.enhancedPrompt}</p>
+                          <Separator className="my-3" />
+                          <p className="text-xs text-muted-foreground">{item.enhancement.reasoning}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <CardFooter className="justify-end p-0 pt-6">
+                    <Button variant="outline" onClick={() => loadHistoryItem(item)}>
+                      <Download className="mr-2 h-4 w-4" /> Load in Editor
+                    </Button>
+                  </CardFooter>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      )}
+    </div>
+  );
+}

@@ -2,6 +2,8 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Home,
   Settings,
@@ -22,9 +24,16 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SettingsDialog } from '@/components/settings-dialog';
+import { cn } from '@/lib/utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  const menuItems = [
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/history', label: 'History', icon: History },
+  ];
 
   return (
     <SidebarProvider>
@@ -41,18 +50,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Home" isActive>
-                <Home />
-                <span>Home</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="History">
-                <History />
-                <span>History</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {menuItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <Link href={item.href} passHref legacyBehavior>
+                  <SidebarMenuButton
+                    tooltip={item.label}
+                    isActive={pathname === item.href}
+                  >
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-4">
@@ -80,4 +90,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
