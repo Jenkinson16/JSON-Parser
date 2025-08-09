@@ -1,119 +1,174 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { handleParsePrompt } from '@/app/actions';
 import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
-import type { SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
-import { handleParsePrompt, handleEnhancePrompt } from '@/app/actions';
-import { useToast } from "@/hooks/use-toast";
-import PromptForm from '@/components/prompt-form';
-import OutputDisplay from '@/components/output-display';
-import { Bot } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, Bot, Code, Sparkles } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export default function Home() {
-  const [prompt, setPrompt] = useState<string>('');
-  const [parsedData, setParsedData] = useState<ParsePromptToJsonOutput | null>(null);
-  const [enhancements, setEnhancements] = useState<SuggestPromptEnhancementsOutput | null>(null);
-  const [isLoadingParse, setIsLoadingParse] = useState<boolean>(false);
-  const [isLoadingEnhance, setIsLoadingEnhance] = useState<boolean>(false);
-  const [jsonOutput, setJsonOutput] = useState<string>('');
-
+export default function PromptParserPage() {
+  const [prompt, setPrompt] = useState('');
+  const [jsonOutput, setJsonOutput] = useState('');
+  const [displayedJson, setDisplayedJson] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const codeBlockRef = useRef<HTMLPreElement>(null);
 
-  const onParse = async () => {
+  useEffect(() => {
+    if (!isLoading && jsonOutput) {
+      setDisplayedJson('');
+      let i = 0;
+      const interval = setInterval(() => {
+        setDisplayedJson((prev) => prev + jsonOutput[i]);
+        i++;
+        if (i >= jsonOutput.length) {
+          clearInterval(interval);
+        }
+      }, 10); // Adjust typing speed here
+
+      return () => clearInterval(interval);
+    }
+  }, [jsonOutput, isLoading]);
+
+  useEffect(() => {
+    if (codeBlockRef.current) {
+      codeBlockRef.current.scrollTop = codeBlockRef.current.scrollHeight;
+    }
+  }, [displayedJson]);
+
+  const onGenerate = async () => {
     if (!prompt.trim()) {
       toast({
-        title: "Error",
-        description: "Prompt cannot be empty.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Prompt cannot be empty.',
+        variant: 'destructive',
       });
       return;
     }
-    setIsLoadingParse(true);
-    setParsedData(null);
-    setEnhancements(null);
+    setIsLoading(true);
+    setError(null);
     setJsonOutput('');
+    setDisplayedJson('');
+
     try {
-      const result = await handleParsePrompt(prompt);
-      setParsedData(result);
+      const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
       // Format JSON with indentation for better readability
       try {
         const formattedJson = JSON.stringify(JSON.parse(result.jsonOutput), null, 2);
         setJsonOutput(formattedJson);
       } catch {
-        setJsonOutput(result.jsonOutput);
+        setJsonOutput(result.jsonOutput); // Fallback to raw output if not valid JSON
       }
-    } catch (error) {
+
+      if (result.biasDetected) {
+        toast({
+          title: 'Potential Bias Detected',
+          description: result.biasReport || 'The AI detected potential bias in your prompt.',
+        });
+      }
+
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+      setError(errorMessage);
       toast({
-        title: "Parsing Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "destructive",
+        title: 'Generation Error',
+        description: errorMessage,
+        variant: 'destructive',
       });
     } finally {
-      setIsLoadingParse(false);
+      setIsLoading(false);
     }
   };
 
-  const onEnhance = async () => {
-    if (!prompt.trim() || !parsedData) {
-      toast({
-        title: "Error",
-        description: "Please parse a prompt first.",
-        variant: "destructive",
-      });
-      return;
+  const renderOutput = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      );
     }
-    setIsLoadingEnhance(true);
-    setEnhancements(null);
-    try {
-      const result = await handleEnhancePrompt({ prompt, jsonSchema: parsedData.jsonOutput });
-      setEnhancements(result);
-    } catch (error) {
-      toast({
-        title: "Enhancement Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingEnhance(false);
+
+    if (error) {
+      return (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+          <Button variant="outline" size="sm" className="mt-4" onClick={onGenerate}>
+            Retry
+          </Button>
+        </Alert>
+      );
     }
+    
+    if (!displayedJson) {
+      return (
+        <Card className="flex h-full min-h-64 items-center justify-center bg-muted/20 border-dashed">
+            <div className="text-center text-muted-foreground">
+                <Code className="mx-auto h-12 w-12 mb-4" />
+                <h3 className="text-lg font-semibold">No JSON yet</h3>
+                <p className="text-sm">Run your first prompt to see results.</p>
+            </div>
+        </Card>
+      );
+    }
+
+    return (
+      <pre ref={codeBlockRef} className="bg-muted/50 rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
+        <code>{displayedJson}</code>
+      </pre>
+    );
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2">
-            <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground font-headline">PromptSmith</h1>
-          </div>
-          <p className="hidden text-muted-foreground md:block">
-            Natural Language to Structured JSON with Ethical AI
-          </p>
+    <div className="grid h-full flex-1 gap-8 p-4 md:grid-cols-2 md:p-6">
+      {/* --- Left Panel --- */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Prompt Input</h2>
         </div>
-      </header>
+        <Card className="flex-1 shadow-sm">
+          <CardContent className="p-4">
+            <Textarea
+              placeholder="e.g., Create a user profile with a name, email, and a list of friends."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="h-full min-h-64 resize-none border-0 p-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </CardContent>
+        </Card>
+        <Button onClick={onGenerate} disabled={isLoading || !prompt.trim()} size="lg">
+          {isLoading ? (
+            <>
+              <Bot className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            'Generate JSON'
+          )}
+        </Button>
+      </div>
 
-      <main className="flex-1 container mx-auto p-4 md:p-6">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <PromptForm
-            prompt={prompt}
-            setPrompt={setPrompt}
-            handleParse={onParse}
-            handleEnhance={onEnhance}
-            isLoadingParse={isLoadingParse}
-            isLoadingEnhance={isLoadingEnhance}
-            isParsed={!!parsedData}
-          />
-          <OutputDisplay
-            jsonOutput={jsonOutput}
-            setJsonOutput={setJsonOutput}
-            biasReport={parsedData?.biasReport}
-            biasDetected={parsedData?.biasDetected}
-            enhancements={enhancements}
-            isLoadingParse={isLoadingParse}
-            isLoadingEnhance={isLoadingEnhance}
-          />
+      {/* --- Right Panel --- */}
+      <div className="flex flex-col gap-4">
+         <div className="flex items-center gap-2">
+          <Code className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">JSON Output</h2>
         </div>
-      </main>
+        <div className="flex-1 rounded-2xl shadow-sm">
+          {renderOutput()}
+        </div>
+      </div>
     </div>
   );
 }
