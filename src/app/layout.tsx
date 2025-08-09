@@ -6,8 +6,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import AppLayout from '@/components/app-layout';
 
 export const metadata: Metadata = {
-  title: 'PromptParser',
-  description: 'Natural Language to Structured JSON Converter for LLMs',
+  title: 'PromptParser - Natural Language to Structured JSON Converter for LLMs',
+  description: 'A powerful tool to convert natural language into structured JSON for Large Language Models.',
 };
 
 export default function RootLayout({

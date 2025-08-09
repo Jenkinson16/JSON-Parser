@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarHeader className="p-4">
           <div className="flex items-center gap-2">
             <div className="bg-primary text-primary-foreground p-2 rounded-lg">
@@ -78,8 +78,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-          <SidebarTrigger className="md:hidden" />
-          <div className="flex-1" />
+          <SidebarTrigger />
+           <div className="flex-1 flex justify-center">
+            <h1 className="text-lg font-semibold text-muted-foreground hidden md:block">
+              PromptParser - Natural Language to Structured JSON Converter for LLMs
+            </h1>
+          </div>
           <ThemeToggle />
         </header>
         <main className="flex-1">
