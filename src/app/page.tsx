@@ -34,6 +34,24 @@ export default function PromptParserPage() {
   const codeBlockRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
+    // Check for history item to load from session storage
+    const itemToLoad = sessionStorage.getItem('loadFromHistory');
+    if (itemToLoad) {
+      try {
+        const parsedItem: HistoryItem = JSON.parse(itemToLoad);
+        setPrompt(parsedItem.prompt);
+        setJsonOutput(parsedItem.jsonOutput);
+        setDisplayedJson(parsedItem.jsonOutput);
+        setEnhancement(parsedItem.enhancement || null);
+      } catch (e) {
+        console.error("Failed to parse history item from session storage", e);
+      } finally {
+        sessionStorage.removeItem('loadFromHistory');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && jsonOutput) {
       setDisplayedJson('');
       let i = 0;
@@ -73,7 +91,16 @@ export default function PromptParserPage() {
         id: new Date().toISOString(),
         timestamp: new Date().toLocaleString(),
       };
-      const newHistory = [newHistoryItem, ...history].slice(0, 50); // Limit history size
+      
+      // If an item with the same prompt already exists, update it. Otherwise, add a new one.
+      const existingItemIndex = history.findIndex(h => h.prompt === item.prompt && h.jsonOutput === item.jsonOutput);
+      if(existingItemIndex > -1){
+        history[existingItemIndex] = { ...history[existingItemIndex], ...item, enhancement: item.enhancement || history[existingItemIndex].enhancement };
+      } else {
+        history.unshift(newHistoryItem);
+      }
+      
+      const newHistory = history.slice(0, 50); // Limit history size
       localStorage.setItem('promptHistory', JSON.stringify(newHistory));
     } catch (error) {
       console.error('Failed to save to history:', error);
@@ -152,10 +179,14 @@ export default function PromptParserPage() {
   const renderOutput = () => {
     if (isLoading) {
       return (
-        <div className="space-y-2 p-4">
-          <Skeleton className="h-8 w-1/4" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+        <Card className="h-full shadow-sm">
+          <CardContent className="p-4 h-full">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-1/4" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          </CardContent>
+        </Card>
       );
     }
 
@@ -186,14 +217,6 @@ export default function PromptParserPage() {
 
     return (
       <Card className="relative h-full shadow-sm">
-        <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 h-7 w-7"
-            onClick={() => copyToClipboard(jsonOutput, 'JSON Output')}
-        >
-            <ClipboardCopy className="h-4 w-4" />
-        </Button>
         <CardContent className="p-0 h-full">
             <pre ref={codeBlockRef} className="bg-muted/50 rounded-lg p-4 font-code text-sm overflow-auto h-full min-h-64 max-h-[70vh]">
             <code>{displayedJson}</code>
@@ -211,17 +234,17 @@ export default function PromptParserPage() {
             <Sparkles className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold">Prompt Input</h2>
           </div>
-        </div>
-        <Card className="flex-1 shadow-sm relative">
-           <Button
+          <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 h-7 w-7 z-10"
             onClick={() => copyToClipboard(prompt, 'Prompt')}
             disabled={!prompt}
+            aria-label="Copy prompt"
           >
             <ClipboardCopy className="h-4 w-4" />
           </Button>
+        </div>
+        <Card className="flex-1 shadow-sm relative">
           <CardContent className="p-0 h-full">
             <Textarea
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
@@ -261,9 +284,20 @@ export default function PromptParserPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-         <div className="flex items-center gap-2">
-          <Code className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">JSON Output</h2>
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Code className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold">JSON Output</h2>
+            </div>
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => copyToClipboard(jsonOutput, 'JSON Output')}
+                disabled={!jsonOutput}
+                aria-label="Copy JSON output"
+            >
+                <ClipboardCopy className="h-4 w-4" />
+            </Button>
         </div>
         <div className="flex-1 rounded-2xl">
           {renderOutput()}
@@ -291,24 +325,22 @@ export default function PromptParserPage() {
 
         {enhancement && (
             <Card className="shadow-sm">
-                 <CardHeader>
+                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Lightbulb className="h-5 w-5" />
                         <span>Enhanced Prompt</span>
                     </CardTitle>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(enhancement.enhancedPrompt, 'Enhanced Prompt')}
+                        aria-label="Copy enhanced prompt"
+                    >
+                        <ClipboardCopy className="h-4 w-4" />
+                    </Button>
                 </CardHeader>
                 <CardContent>
-                    <div className="relative">
-                         <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute -top-1 right-0 h-7 w-7"
-                            onClick={() => copyToClipboard(enhancement.enhancedPrompt, 'Enhanced Prompt')}
-                        >
-                            <ClipboardCopy className="h-4 w-4" />
-                        </Button>
-                        <p className="text-sm bg-muted/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
-                    </div>
+                    <p className="text-sm bg-muted/50 p-4 rounded-md font-code">{enhancement.enhancedPrompt}</p>
                     <Separator className="my-4" />
                     <div>
                         <h4 className="font-semibold text-sm mb-2">Reasoning</h4>

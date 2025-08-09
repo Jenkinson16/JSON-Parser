@@ -60,8 +60,6 @@ export default function HistoryPage() {
   };
 
   const loadHistoryItem = (item: HistoryItem) => {
-    // This is a simple way to pass data to the main page.
-    // For more complex scenarios, consider state management (e.g., Context API, Zustand).
     sessionStorage.setItem('loadFromHistory', JSON.stringify(item));
     router.push('/');
     toast({
@@ -115,36 +113,44 @@ export default function HistoryPage() {
                   <Separator className="mb-4" />
                   <div className="space-y-6">
                     <div>
-                      <h4 className="font-semibold mb-2">Generated JSON</h4>
-                      <div className="relative">
-                        <pre className="bg-muted/50 rounded-md p-4 font-code text-sm max-h-60 overflow-auto">
-                          <code>{item.jsonOutput}</code>
-                        </pre>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold">Generated JSON</h4>
                          <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 h-7 w-7"
-                            onClick={() => copyToClipboard(item.jsonOutput, 'JSON Output')}
+                            className="h-7 w-7"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(item.jsonOutput, 'JSON Output');
+                            }}
                         >
                             <ClipboardCopy className="h-4 w-4" />
                         </Button>
                       </div>
+                      <pre className="bg-muted/50 rounded-md p-4 font-code text-sm max-h-60 overflow-auto">
+                        <code>{item.jsonOutput}</code>
+                      </pre>
                     </div>
                     {item.enhancement && (
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center">
-                          <Lightbulb className="mr-2 h-4 w-4 text-primary" />
-                          Enhancement Suggestion
-                        </h4>
-                        <div className="relative bg-muted/50 p-4 rounded-md">
+                        <div className="flex items-center justify-between mb-2">
+                           <h4 className="font-semibold flex items-center">
+                            <Lightbulb className="mr-2 h-4 w-4 text-primary" />
+                            Enhancement Suggestion
+                          </h4>
                            <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 h-7 w-7"
-                            onClick={() => copyToClipboard(item.enhancement?.enhancedPrompt || '', 'Enhanced Prompt')}
+                            className="h-7 w-7"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(item.enhancement?.enhancedPrompt || '', 'Enhanced Prompt')
+                            }}
                           >
                             <ClipboardCopy className="h-4 w-4" />
                           </Button>
+                        </div>
+                        <div className="bg-muted/50 p-4 rounded-md">
                           <p className="font-code text-sm">{item.enhancement.enhancedPrompt}</p>
                           <Separator className="my-3" />
                           <p className="text-xs text-muted-foreground">{item.enhancement.reasoning}</p>
