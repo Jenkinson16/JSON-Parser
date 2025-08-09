@@ -19,7 +19,7 @@ const SuggestPromptEnhancementsInputSchema = z.object({
 export type SuggestPromptEnhancementsInput = z.infer<typeof SuggestPromptEnhancementsInputSchema>;
 
 const SuggestPromptEnhancementsOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('A list of suggestions to enhance the prompt.'),
+  enhancedPrompt: z.string().describe('A single, rewritten version of the prompt with improvements incorporated.'),
 });
 export type SuggestPromptEnhancementsOutput = z.infer<typeof SuggestPromptEnhancementsOutputSchema>;
 
@@ -33,12 +33,12 @@ const prompt = ai.definePrompt({
   output: {schema: SuggestPromptEnhancementsOutputSchema},
   prompt: `You are a prompt engineering expert. Your goal is to help users improve their prompts to get better-structured JSON outputs.
 
-  Analyze the user's original prompt and the resulting JSON output. Based on this, provide a list of concrete suggestions for how they could improve their prompt.
+  Analyze the user's original prompt and the resulting JSON output. Based on this, rewrite the user's prompt to be clearer, more specific, and better structured for a large language model.
+
+  Do not just list suggestions. Provide a single, complete, rewritten prompt that incorporates your improvements.
 
   Original Prompt: {{{prompt}}}
   Generated JSON: {{{jsonOutput}}}
-
-  Provide a list of actionable suggestions for improvement. For example, if a field is vague, suggest adding more specific details. If the structure could be clearer, suggest how to rephrase it.
   `,
 });
 

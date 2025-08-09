@@ -16,7 +16,7 @@ export default function PromptParserPage() {
   const [prompt, setPrompt] = useState('');
   const [jsonOutput, setJsonOutput] = useState('');
   const [displayedJson, setDisplayedJson] = useState('');
-  const [enhancementSuggestions, setEnhancementSuggestions] = useState<string[]>([]);
+  const [enhancementSuggestion, setEnhancementSuggestion] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,15 +27,16 @@ export default function PromptParserPage() {
     if (!isLoading && jsonOutput) {
       setDisplayedJson('');
       let i = 0;
-      const interval = setInterval(() => {
-        setDisplayedJson((prev) => prev + jsonOutput[i]);
-        i++;
-        if (i >= jsonOutput.length) {
-          clearInterval(interval);
+      const intervalId = setInterval(() => {
+        if (i < jsonOutput.length) {
+          setDisplayedJson((prev) => prev + jsonOutput[i]);
+          i++;
+        } else {
+          clearInterval(intervalId);
         }
       }, 10);
 
-      return () => clearInterval(interval);
+      return () => clearInterval(intervalId);
     }
   }, [jsonOutput, isLoading]);
 
@@ -46,6 +47,7 @@ export default function PromptParserPage() {
   }, [displayedJson]);
   
   const copyToClipboard = (text: string, type: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
       title: 'Copied to clipboard!',
@@ -66,7 +68,7 @@ export default function PromptParserPage() {
     setError(null);
     setJsonOutput('');
     setDisplayedJson('');
-    setEnhancementSuggestions([]);
+    setEnhancementSuggestion('');
 
     try {
       const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
@@ -99,10 +101,10 @@ export default function PromptParserPage() {
 
   const onEnhance = async () => {
     setIsEnhancing(true);
-    setEnhancementSuggestions([]);
+    setEnhancementSuggestion('');
     try {
         const result = await handleSuggestEnhancements(prompt, jsonOutput);
-        setEnhancementSuggestions(result.suggestions);
+        setEnhancementSuggestion(result.enhancedPrompt);
     } catch (e) {
          const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
          toast({
@@ -239,7 +241,7 @@ export default function PromptParserPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Lightbulb className="h-5 w-5" />
-                        <span>Enhancement Suggestions</span>
+                        <span>Enhanced Prompt</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -250,20 +252,26 @@ export default function PromptParserPage() {
             </Card>
         )}
 
-        {enhancementSuggestions.length > 0 && (
+        {enhancementSuggestion && (
             <Card className="shadow-sm">
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Lightbulb className="h-5 w-5" />
-                        <span>Enhancement Suggestions</span>
+                        <span>Enhanced Prompt</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ul className="list-disc space-y-2 pl-5 text-sm">
-                        {enhancementSuggestions.map((suggestion, index) => (
-                            <li key={index}>{suggestion}</li>
-                        ))}
-                    </ul>
+                    <div className="relative">
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -top-1 right-0 h-7 w-7"
+                            onClick={() => copyToClipboard(enhancementSuggestion, 'Enhanced Prompt')}
+                        >
+                            <ClipboardCopy className="h-4 w-4" />
+                        </Button>
+                        <p className="text-sm bg-muted/50 p-4 rounded-md">{enhancementSuggestion}</p>
+                    </div>
                 </CardContent>
             </Card>
         )}
