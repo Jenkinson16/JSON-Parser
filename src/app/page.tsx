@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { handleParsePrompt, handleSuggestEnhancements } from '@/app/actions';
+import { handleParsePrompt, handleSuggestEnhancements, handleGenerateTitle } from '@/app/actions';
 import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
 import type { SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 
 export interface HistoryItem {
   id: string;
+  title: string;
   prompt: string;
   jsonOutput: string;
   enhancement?: SuggestPromptEnhancementsOutput | null;
@@ -57,7 +58,7 @@ export default function PromptParserPage() {
       let i = 0;
       const typeNextChar = () => {
         if (i < jsonOutput.length) {
-          setDisplayedJson((prev) => prev + (jsonOutput[i] || ''));
+          setDisplayedJson((prev) => prev + jsonOutput[i]);
           i++;
           requestAnimationFrame(typeNextChar);
         }
@@ -83,19 +84,32 @@ export default function PromptParserPage() {
     });
   };
   
-  const saveToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
+  const saveToHistory = async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'title'> & { title?: string }) => {
     try {
       const history = JSON.parse(localStorage.getItem('promptHistory') || '[]') as HistoryItem[];
+      
+      let title = item.title;
+      if (!title) {
+        try {
+            const titleResult = await handleGenerateTitle(item.prompt);
+            title = titleResult.title;
+        } catch (e) {
+            console.error("Failed to generate title, using prompt as fallback", e);
+            // Use first few words of prompt as a fallback title
+            title = item.prompt.split(' ').slice(0, 5).join(' ') + '...';
+        }
+      }
+
       const newHistoryItem: HistoryItem = {
         ...item,
         id: new Date().toISOString(),
+        title: title,
         timestamp: new Date().toLocaleString(),
       };
       
-      // If an item with the same prompt already exists, update it. Otherwise, add a new one.
-      const existingItemIndex = history.findIndex(h => h.prompt === item.prompt && h.jsonOutput === item.jsonOutput);
+      const existingItemIndex = history.findIndex(h => h.id === newHistoryItem.id);
       if(existingItemIndex > -1){
-        history[existingItemIndex] = { ...history[existingItemIndex], ...item, enhancement: item.enhancement || history[existingItemIndex].enhancement };
+        history[existingItemIndex] = { ...history[existingItemIndex], ...newHistoryItem, enhancement: item.enhancement || history[existingItemIndex].enhancement };
       } else {
         history.unshift(newHistoryItem);
       }
@@ -238,12 +252,12 @@ export default function PromptParserPage() {
             <ClipboardCopy className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex-1 relative">
+        <div className="flex-1 flex flex-col relative">
             <Textarea
               placeholder="e.g., Create a user profile with a name, email, and a list of friends."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="h-full min-h-[40rem] resize-none p-4 rounded-2xl"
+              className="flex-grow resize-none p-4 rounded-2xl"
             />
         </div>
         <div className="flex gap-2">

@@ -21,7 +21,8 @@ export default function HistoryPage() {
     try {
       const storedHistory = JSON.parse(localStorage.getItem('promptHistory') || '[]');
       setHistory(storedHistory);
-    } catch (error) {
+    } catch (error)
+      {
       console.error('Failed to load history:', error);
       toast({
         title: 'Error',
@@ -102,7 +103,7 @@ export default function HistoryPage() {
               <Card className="shadow-sm">
                 <AccordionTrigger className="p-6 text-left hover:no-underline">
                   <div className="flex-1">
-                    <p className="font-mono text-sm truncate">{item.prompt}</p>
+                    <p className="font-semibold text-base truncate">{item.title || item.prompt}</p>
                     <p className="text-xs text-muted-foreground mt-2 flex items-center">
                       <Clock className="mr-2 h-3 w-3" />
                       {item.timestamp}
@@ -112,6 +113,11 @@ export default function HistoryPage() {
                 <AccordionContent className="px-6 pb-6">
                   <Separator className="mb-4" />
                   <div className="space-y-6">
+                    <div>
+                        <p className="text-sm text-muted-foreground mb-2">Original Prompt:</p>
+                        <p className="bg-muted rounded-md p-4 font-code text-sm">{item.prompt}</p>
+                    </div>
+
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold">Generated JSON</h4>
@@ -131,6 +137,7 @@ export default function HistoryPage() {
                         <code>{item.jsonOutput}</code>
                       </pre>
                     </div>
+
                     {item.enhancement && (
                       <div>
                         <div className="flex items-center justify-between mb-2">
