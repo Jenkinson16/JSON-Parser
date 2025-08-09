@@ -1,7 +1,7 @@
 'use server';
 
 import { parsePromptToJson, ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
-import { suggestPromptEnhancements, SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
+import { suggestPromptEnhancements, SuggestPromptEnhancementsInput, SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
 
 export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJsonOutput> {
   if (!prompt) {
@@ -16,12 +16,15 @@ export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJs
   }
 }
 
-export async function handleEnhancePrompt(prompt: string): Promise<SuggestPromptEnhancementsOutput> {
-  if (!prompt) {
+export async function handleEnhancePrompt(input: SuggestPromptEnhancementsInput): Promise<SuggestPromptEnhancementsOutput> {
+  if (!input.prompt) {
     throw new Error('Prompt cannot be empty.');
   }
+   if (!input.jsonSchema) {
+    throw new Error('JSON schema cannot be empty.');
+  }
   try {
-    const result = await suggestPromptEnhancements({ prompt });
+    const result = await suggestPromptEnhancements(input);
     return result;
   } catch (error) {
     console.error('Error enhancing prompt:', error);

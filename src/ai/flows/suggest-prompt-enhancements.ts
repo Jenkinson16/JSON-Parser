@@ -12,6 +12,7 @@ import {z} from 'genkit';
 
 const SuggestPromptEnhancementsInputSchema = z.object({
   prompt: z.string().describe('The prompt to be enhanced.'),
+  jsonSchema: z.string().describe('The JSON schema that was parsed from the prompt.'),
 });
 export type SuggestPromptEnhancementsInput = z.infer<typeof SuggestPromptEnhancementsInputSchema>;
 
@@ -31,9 +32,14 @@ const prompt = ai.definePrompt({
   output: {schema: SuggestPromptEnhancementsOutputSchema},
   prompt: `You are an AI prompt enhancement expert. Your goal is to improve the given prompt for better compatibility and effectiveness with LLMs.
 
-  Analyze the prompt and suggest specific improvements, explaining your reasoning.
+  Analyze the prompt and its resulting JSON schema to suggest specific improvements, explaining your reasoning. The goal is to make the prompt clearer, more specific, and less ambiguous to produce a better JSON output.
 
-  Prompt: {{{prompt}}}
+  Original Prompt: {{{prompt}}}
+
+  Parsed JSON Schema:
+  \`\`\`json
+  {{{jsonSchema}}}
+  \`\`\`
   `,
 });
 

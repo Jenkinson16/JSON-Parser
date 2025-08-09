@@ -54,10 +54,10 @@ export default function Home() {
   };
 
   const onEnhance = async () => {
-    if (!prompt.trim()) {
+    if (!prompt.trim() || !parsedData) {
       toast({
         title: "Error",
-        description: "Prompt cannot be empty.",
+        description: "Please parse a prompt first.",
         variant: "destructive",
       });
       return;
@@ -65,7 +65,7 @@ export default function Home() {
     setIsLoadingEnhance(true);
     setEnhancements(null);
     try {
-      const result = await handleEnhancePrompt(prompt);
+      const result = await handleEnhancePrompt({ prompt, jsonSchema: parsedData.jsonOutput });
       setEnhancements(result);
     } catch (error) {
       toast({
