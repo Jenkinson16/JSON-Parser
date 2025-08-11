@@ -1,4 +1,4 @@
-# **App Name**: PromptSmith
+# **App Name**: PromptParser
 
 ## Core Features:
 
