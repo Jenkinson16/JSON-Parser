@@ -1,6 +1,10 @@
 
 'use client';
 
+/**
+ * Main prompt workspace: accepts a prompt, generates structured JSON,
+ * offers enhancements, and manages local history.
+ */
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { handleParsePrompt, handleSuggestEnhancements, handleGenerateTitle } from '@/app/actions';
@@ -35,7 +39,6 @@ export default function PromptParserPage() {
   const codeBlockRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    // Check for history item to load from session storage
     const itemToLoad = sessionStorage.getItem('loadFromHistory');
     if (itemToLoad) {
       try {
@@ -95,7 +98,6 @@ export default function PromptParserPage() {
             title = titleResult.title;
         } catch (e) {
             console.error("Failed to generate title, using prompt as fallback", e);
-            // Use first few words of prompt as a fallback title
             title = item.prompt.split(' ').slice(0, 5).join(' ') + '...';
         }
       }
@@ -114,7 +116,7 @@ export default function PromptParserPage() {
         history.unshift(newHistoryItem);
       }
       
-      const newHistory = history.slice(0, 50); // Limit history size
+      const newHistory = history.slice(0, 50);
       localStorage.setItem('promptHistory', JSON.stringify(newHistory));
     } catch (error) {
       console.error('Failed to save to history:', error);
@@ -191,7 +193,6 @@ export default function PromptParserPage() {
 
   return (
     <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 p-4 md:p-6">
-      {/* Left Column */}
       <div className="flex flex-col gap-6 md:gap-8">
         <Card className="flex-1 flex flex-col glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -253,7 +254,6 @@ export default function PromptParserPage() {
         </Card>
       </div>
 
-      {/* Right Column */}
       <div className="flex flex-col gap-6 md:gap-8">
         <Card className="flex-1 flex flex-col glass-card">
           <CardHeader className="flex flex-row items-center justify-between">

@@ -1,6 +1,10 @@
 
 'use client';
 
+/**
+ * History page for viewing, loading, deleting, and favoriting
+ * previously generated prompts and outputs stored in localStorage.
+ */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { HistoryItem } from '@/app/page';
@@ -92,7 +96,6 @@ export default function HistoryPage() {
   const addToFavorites = (item: HistoryItem) => {
     try {
       const favorites = JSON.parse(localStorage.getItem('promptFavorites') || '[]') as HistoryItem[];
-      // Check if item already in favorites
       if (favorites.some(fav => fav.id === item.id)) {
         toast({
           title: 'Already in Favorites',

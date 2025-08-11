@@ -1,5 +1,9 @@
-# Firebase Studio
+# Studio
 
-This is a NextJS starter in Firebase Studio.
+Next.js app for prompt-to-JSON utilities and enhancements.
 
-To get started, take a look at src/app/page.tsx.
+- Dev: `npm run dev` (default port 9002)
+- Build: `npm run build`
+- Start: `npm start`
+
+See `src/app/page.tsx` to explore the main workspace.
