@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { handleParsePrompt, handleSuggestEnhancements, handleGenerateTitle } from '@/app/actions';
 import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
 import type { SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
+import type { HistoryItem } from '@/types/prompt';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,14 +19,7 @@ import { AlertCircle, Bot, Code, Sparkles, Lightbulb, ClipboardCopy } from 'luci
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
-export interface HistoryItem {
-  id: string;
-  title: string;
-  prompt: string;
-  jsonOutput: string;
-  enhancement?: SuggestPromptEnhancementsOutput | null;
-  timestamp: string;
-}
+// moved to src/types/prompt.ts
 
 export default function PromptParserPage() {
   const [prompt, setPrompt] = useState('');
