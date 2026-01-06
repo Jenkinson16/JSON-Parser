@@ -122,13 +122,27 @@ export async function handleSuggestEnhancements(prompt: string, jsonOutput: stri
     if (!prompt || !jsonOutput) {
         throw new Error('Prompt and JSON output are required to suggest enhancements.');
     }
+    
+    // Check if API key is available
+    if (!process.env.GOOGLE_GENAI_API_KEY) {
+        throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+    }
+    
     try {
         const result = await suggestPromptEnhancements({ prompt, jsonOutput });
         return result;
     } catch (error) {
         console.error('Error suggesting enhancements:', error);
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+            console.error('Error name:', error.name);
+        }
         const errorMessage = getErrorMessage(error);
-        throw new Error(errorMessage);
+        const serializableError = new Error(errorMessage);
+        if (error instanceof Error) {
+            serializableError.name = error.name;
+        }
+        throw serializableError;
     }
 }
 
@@ -136,12 +150,26 @@ export async function handleGenerateTitle(prompt: string): Promise<GenerateTitle
     if (!prompt) {
         throw new Error('Prompt cannot be empty.');
     }
+    
+    // Check if API key is available
+    if (!process.env.GOOGLE_GENAI_API_KEY) {
+        throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+    }
+    
     try {
         const result = await generateTitle({ prompt });
         return result;
     } catch (error) {
         console.error('Error generating title:', error);
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+            console.error('Error name:', error.name);
+        }
         const errorMessage = getErrorMessage(error);
-        throw new Error(errorMessage);
+        const serializableError = new Error(errorMessage);
+        if (error instanceof Error) {
+            serializableError.name = error.name;
+        }
+        throw serializableError;
     }
 }
