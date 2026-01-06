@@ -91,9 +91,13 @@ export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJs
     throw new Error('Prompt cannot be empty.');
   }
   
-  // Check if API key is available
-  if (!process.env.GOOGLE_GENAI_API_KEY) {
-    throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+  // Check if API key is available (support multiple possible env var names)
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+      'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
+    );
   }
   
   try {
@@ -123,9 +127,13 @@ export async function handleSuggestEnhancements(prompt: string, jsonOutput: stri
         throw new Error('Prompt and JSON output are required to suggest enhancements.');
     }
     
-    // Check if API key is available
-    if (!process.env.GOOGLE_GENAI_API_KEY) {
-        throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+    // Check if API key is available (support multiple possible env var names)
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+        throw new Error(
+            'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+            'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
+        );
     }
     
     try {
@@ -151,9 +159,13 @@ export async function handleGenerateTitle(prompt: string): Promise<GenerateTitle
         throw new Error('Prompt cannot be empty.');
     }
     
-    // Check if API key is available
-    if (!process.env.GOOGLE_GENAI_API_KEY) {
-        throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+    // Check if API key is available (support multiple possible env var names)
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+        throw new Error(
+            'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+            'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
+        );
     }
     
     try {
