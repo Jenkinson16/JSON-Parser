@@ -26,8 +26,7 @@ export default function HistoryPage() {
     try {
       const storedHistory = JSON.parse(localStorage.getItem('promptHistory') || '[]');
       setHistory(storedHistory);
-    } catch (error)
-      {
+    } catch (error) {
       console.error('Failed to load history:', error);
       toast({
         title: 'Error',
