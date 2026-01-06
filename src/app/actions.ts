@@ -90,13 +90,31 @@ export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJs
   if (!prompt) {
     throw new Error('Prompt cannot be empty.');
   }
+  
+  // Check if API key is available
+  if (!process.env.GOOGLE_GENAI_API_KEY) {
+    throw new Error('GOOGLE_GENAI_API_KEY is not set. Please configure it in your Vercel environment variables.');
+  }
+  
   try {
     const result = await parsePromptToJson({ prompt });
     return result;
   } catch (error) {
     console.error('Error parsing prompt:', error);
+    // Log full error details for debugging
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+    }
     const errorMessage = getErrorMessage(error);
-    throw new Error(errorMessage);
+    // Create a new error with the message to ensure it's serializable
+    const serializableError = new Error(errorMessage);
+    // Preserve the original error name if available
+    if (error instanceof Error) {
+      serializableError.name = error.name;
+    }
+    throw serializableError;
   }
 }
 
