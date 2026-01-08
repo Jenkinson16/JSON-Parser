@@ -8,7 +8,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { handleParsePrompt, handleSuggestEnhancements, handleGenerateTitle } from '@/app/actions';
-import type { ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
 import type { SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
 import type { HistoryItem } from '@/types/prompt';
 import { Button } from '@/components/ui/button';
@@ -89,7 +88,7 @@ export default function PromptParserPage() {
       if (!title) {
         try {
             const titleResult = await handleGenerateTitle(item.prompt);
-            title = titleResult.title;
+            title = titleResult.ok ? titleResult.data.title : item.prompt.split(' ').slice(0, 5).join(' ') + '...';
         } catch (e) {
             console.error("Failed to generate title, using prompt as fallback", e);
             title = item.prompt.split(' ').slice(0, 5).join(' ') + '...';
@@ -134,20 +133,30 @@ export default function PromptParserPage() {
     setEnhancement(null);
 
     try {
-      const result: ParsePromptToJsonOutput = await handleParsePrompt(prompt);
+      const result = await handleParsePrompt(prompt);
+      if (!result.ok) {
+        setError(result.error);
+        toast({
+          title: 'Generation Error',
+          description: result.error,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       let formattedJson = '';
       try {
-        formattedJson = JSON.stringify(JSON.parse(result.jsonOutput), null, 2);
+        formattedJson = JSON.stringify(JSON.parse(result.data.jsonOutput), null, 2);
         setJsonOutput(formattedJson);
       } catch {
-        formattedJson = result.jsonOutput;
+        formattedJson = result.data.jsonOutput;
         setJsonOutput(formattedJson);
       }
 
-      if (result.biasDetected) {
+      if (result.data.biasDetected) {
         toast({
           title: 'Potential Bias Detected',
-          description: result.biasReport || 'The AI detected potential bias in your prompt.',
+          description: result.data.biasReport || 'The AI detected potential bias in your prompt.',
         });
       }
       
@@ -171,8 +180,16 @@ export default function PromptParserPage() {
     setEnhancement(null);
     try {
         const result = await handleSuggestEnhancements(prompt, jsonOutput);
-        setEnhancement(result);
-        saveToHistory({ prompt, jsonOutput, enhancement: result });
+        if (!result.ok) {
+          toast({
+             title: 'Enhancement Error',
+             description: result.error,
+             variant: 'destructive',
+          });
+          return;
+        }
+        setEnhancement(result.data);
+        saveToHistory({ prompt, jsonOutput, enhancement: result.data });
     } catch (e) {
          const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
          toast({

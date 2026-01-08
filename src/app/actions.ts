@@ -2,7 +2,7 @@
 'use server';
 
 import { parsePromptToJson, ParsePromptToJsonOutput } from '@/ai/flows/parse-prompt-to-json';
-import { suggestPromptEnhancements, SuggestPromptEnhancementsOutput, SuggestPromptEnhancementsInput } from '@/ai/flows/suggest-prompt-enhancements';
+import { suggestPromptEnhancements, SuggestPromptEnhancementsOutput } from '@/ai/flows/suggest-prompt-enhancements';
 import { generateTitle, GenerateTitleOutput } from '@/ai/flows/generate-title';
 
 // Helper function to extract meaningful error messages
@@ -86,23 +86,29 @@ function getErrorMessage(error: unknown): string {
   return 'An unexpected error occurred. Please try again later.';
 }
 
-export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJsonOutput> {
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+export async function handleParsePrompt(prompt: string): Promise<ActionResult<ParsePromptToJsonOutput>> {
   if (!prompt) {
-    throw new Error('Prompt cannot be empty.');
+    return { ok: false, error: 'Prompt cannot be empty.' };
   }
   
   // Check if API key is available (support multiple possible env var names)
   const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
-      'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
-    );
+    return {
+      ok: false,
+      error:
+        'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+        'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.',
+    };
   }
   
   try {
     const result = await parsePromptToJson({ prompt });
-    return result;
+    return { ok: true, data: result };
   } catch (error) {
     console.error('Error parsing prompt:', error);
     // Log full error details for debugging
@@ -118,27 +124,32 @@ export async function handleParsePrompt(prompt: string): Promise<ParsePromptToJs
     if (error instanceof Error) {
       serializableError.name = error.name;
     }
-    throw serializableError;
+    return { ok: false, error: serializableError.message };
   }
 }
 
-export async function handleSuggestEnhancements(prompt: string, jsonOutput: string): Promise<SuggestPromptEnhancementsOutput> {
+export async function handleSuggestEnhancements(
+  prompt: string,
+  jsonOutput: string
+): Promise<ActionResult<SuggestPromptEnhancementsOutput>> {
     if (!prompt || !jsonOutput) {
-        throw new Error('Prompt and JSON output are required to suggest enhancements.');
+        return { ok: false, error: 'Prompt and JSON output are required to suggest enhancements.' };
     }
     
     // Check if API key is available (support multiple possible env var names)
     const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        throw new Error(
-            'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
-            'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
-        );
+        return {
+            ok: false,
+            error:
+              'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+              'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.',
+        };
     }
     
     try {
         const result = await suggestPromptEnhancements({ prompt, jsonOutput });
-        return result;
+        return { ok: true, data: result };
     } catch (error) {
         console.error('Error suggesting enhancements:', error);
         if (error instanceof Error) {
@@ -150,27 +161,29 @@ export async function handleSuggestEnhancements(prompt: string, jsonOutput: stri
         if (error instanceof Error) {
             serializableError.name = error.name;
         }
-        throw serializableError;
+        return { ok: false, error: serializableError.message };
     }
 }
 
-export async function handleGenerateTitle(prompt: string): Promise<GenerateTitleOutput> {
+export async function handleGenerateTitle(prompt: string): Promise<ActionResult<GenerateTitleOutput>> {
     if (!prompt) {
-        throw new Error('Prompt cannot be empty.');
+        return { ok: false, error: 'Prompt cannot be empty.' };
     }
     
     // Check if API key is available (support multiple possible env var names)
     const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        throw new Error(
-            'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
-            'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.'
-        );
+        return {
+            ok: false,
+            error:
+              'Google AI API key is not set. Please set GOOGLE_GENAI_API_KEY (or GEMINI_API_KEY) in your Vercel environment variables. ' +
+              'Get your API key from https://ai.google.dev/ and add it in Vercel Project Settings → Environment Variables.',
+        };
     }
     
     try {
         const result = await generateTitle({ prompt });
-        return result;
+        return { ok: true, data: result };
     } catch (error) {
         console.error('Error generating title:', error);
         if (error instanceof Error) {
@@ -182,6 +195,6 @@ export async function handleGenerateTitle(prompt: string): Promise<GenerateTitle
         if (error instanceof Error) {
             serializableError.name = error.name;
         }
-        throw serializableError;
+        return { ok: false, error: serializableError.message };
     }
 }
